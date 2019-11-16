@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>库存操作</title>
+<!-- 导入easyui样式 -->
+<link rel="stylesheet" type="text/css" href="../easyui/themes/default/easyui.css" />
+<link rel="stylesheet" type="text/css" href="../easyui/themes/icon.css" />
+<!-- 导入easyui相关的js库文件(函数) -->
+<script type="text/javascript" src="../easyui/jquery.min.js"></script>
+<script type="text/javascript" src="../easyui/jquery.easyui.min.js"></script>
+<script type="text/javascript" src="../easyui/locale/easyui-lang-zh_CN.js"></script>
+<script type="text/javascript" src="../easyui/datagrid-export.js"></script>
+<!-- 自定义的样式 -->
+<style type="text/css">
+#mytable {
+	width: 100%;
+	border-collapse: collapse;
+}
+
+#mytable td {
+	font-size: 12px;
+}
+
+.tdalign {
+	text-align: right;
+	width: 40%;
+}
+#smartart,#print{
+	float:right;
+	margin:15px 5px;
+}
+</style>
+<!-- 脚本代码 -->
+<script type="text/javascript">
+		$(function(){
+			/* 对表格对象加载datagrid方法 */
+			$("#dg").datagrid({
+				idFiled:'stockId',//主键字段
+				toolbar:'#toolbar',//绑定工具栏
+				fit:true,//填充容器
+				url:"../StockServlet?method=findAll", //数据源路径
+				nowrap:true,
+				striped: true,//斑马线
+				fitColumns:true,//自动填充列
+				rownumbers:true,//增加一个行号列
+				loadMsg:'正在玩命加载，请稍候....',//在页面显示数据之前，显示的文本
+				//冻结列：让某些列永远显示在页面中
+				frozenColumns:[[{
+					'field':'checkbox',//复选框列
+					'checkbox':true
+				}]],
+				//设置datagrid数据表格对象中的数据列
+				columns:[[{
+					field:'stockId',//字段名
+					title:'库存编号',//datagrid数据表格中显示的列的标题
+					align:'center',//数据显示的位置:居中
+					width:'32%' //数据列的宽度
+				},{
+					field:'goodsName',
+					title:'商品名',
+					align:'center',
+					width:'32%'
+				},
+				{field:'stockNum',title:'库存量',align:'center',width:'32%'}
+				]],
+				//datagrid底部是否显示分页工具栏
+				pagination:true,
+				//底部分页工具栏中，页面记录数列表
+				pageList:[5,10,15,20],
+				//分页工具栏显示位置
+				pagePosition:'bottom',
+				//当前页面默认大小(每页显示多少行数据)
+				pageSize:5
+			});
+			
+			//对数据进行修改
+			$("#ok").click(function(){	
+				//判断表单数据是否通过验证
+				if($("#form").form("validate")){
+					//$.post(url,data,callback,type)
+					$.post("../StockServlet?method=update",
+					$("#form").serialize(),
+					function(message){
+						//判断服务器端返回的字符串内容:修改成功success,修改失败failure
+						if(message=="success"){
+							//右下角显示一个信息提示
+							$.messager.show({
+								title:"提示",
+								msg:"库存修该成功!"
+							});
+							//添加成功后，把修改界面数据清空
+							$("#form").form("reset");
+							//把对话框关闭
+							$("#dialog").dialog("close");
+							//datagrid数据表格重新加载
+							$("#dg").datagrid("reload");
+						}else{
+							//右下角显示一个信息提示
+							$.messager.show({
+								title:"提示",
+								msg:"库存修改失败!"
+							});
+						}
+					},
+					"text");
+				}
+			});
+		
+			//点击工具栏上的修改库存
+			$("#update").click(function(){
+				//获取datagrid中选择的数据行
+				var array=$("#dg").datagrid("getSelections");
+				//判断选择的数据行是否为多行或未选择数据行
+				if(array.length==0 || array.length>1){
+					//弹出提示信息
+					$.messager.show({
+						title:"提示信息",
+						msg:"请选择一行数据进行修改...."
+					});
+				}else{
+					//客户正确选择了一行数据
+					//打开增加对话框，修改对话框的标题及图标，按钮文字
+					$("#dialog").dialog({
+						title:"修改库存",
+						iconCls:"icon-edit"
+					});
+					
+					//打开对话框
+					$("#dialog").dialog("open");
+					//把要修改的数据行（array[0]行）加载到修改表单中。
+					$("#form").form("load",{
+						stockId:array[0].stockId,
+						goodsName:array[0].goodsName,
+						stockNum:array[0].stockNum,
+						stockPrice:array[0].stockPrice,
+						stockTime:array[0].stockTime,
+						
+						
+					});
+				}
+			});
+			
+			//出库
+			$("#chuku").click(function(){
+				//获取datagrid中选择的数据行
+				var array=$("#dg").datagrid("getSelections");
+				//判断选择的数据行是否为多行或未选择数据行
+				if(array.length==0 || array.length>1){
+					//弹出提示信息
+					$.messager.show({
+						title:"提示信息",
+						msg:"请选择一行数据进行领用...."
+					});
+				}else{
+					//客户正确选择了一行数据
+					//打开增加对话框，修改对话框的标题及图标，按钮文字
+					$("#dialog1").dialog({
+						title:"领用物品",
+						iconCls:"icon-edit"
+					});
+					
+					//打开对话框
+					$("#dialog1").dialog("open");
+					//把要修改的数据行（array[0]行）加载到修改表单中。
+					$("#form1").form("load",{
+						goodsName:array[0].goodsName,
+						
+						
+					});
+					
+					//设置表单按钮上的文字
+					$("#ok1").linkbutton({
+						text:"领用",
+						iconCls:"icon-edit"
+					});
+					
+				}
+			});
+			$("#ok1").click(function(){
+				//判断表单数据是否通过验证
+				if($("#form1").form("validate")){
+					//$.post(url,data,callback,type)
+					$.post("../StockServlet?method=chuku",
+					$("#form1").serialize(),
+					function(message){
+						//判断服务器端返回的字符串内容:修改成功success,修改失败failure
+						if(message=="success"){
+							//右下角显示一个信息提示
+							$.messager.show({
+								title:"提示",
+								msg:"物料领用成功!"
+							});
+							//添加成功后，把修改界面数据清空
+							$("#form1").form("reset");
+							//把对话框关闭
+							$("#dialog1").dialog("close");
+							//datagrid数据表格重新加载
+							$("#dg").datagrid("reload");
+						}else if(message=="failure"){
+							//右下角显示一个信息提示
+							$.messager.show({
+								title:"提示",
+								msg:"物料领用失败!"
+							});
+						}else{
+							$.messager.show({
+								title:"提示",
+								msg:"领用数量大于库存数量，领用失败!"
+							});
+						}
+					},
+					"text");
+				}
+			});
+			
+			//搜索层中的搜索按钮事件
+			$("#search").click(function(){
+				var rows=$("#dg").datagrid("options").pageSize;
+				var page=$("#dg").datagrid("options").pageNumber;
+				$.ajax({
+					type:"post",
+					url:"../StockServlet?method=findAll&rows="+rows+"&page="+page,
+					async:true,
+					data:$("#searchform").serialize(),//表单数据序列化
+					dataType:"json",
+					success:function(message){
+						$("#dg").datagrid("loadData",message);
+					}
+				});
+			});
+			
+			//刷新按钮
+			$("#refresh").click(function(){
+				//添加成功后，把修改界面数据清空
+				$("#searchform").form("reset");
+				//datagrid数据表格重新加载
+				$("#dg").datagrid("reload");
+			});
+			
+			//取消按钮的点击事件
+			$("#cancel").click(function(){
+				//添加成功后，把修改界面数据清空
+				$("#form").form("reset");
+				//把对话框关闭
+				$("#dialog").dialog("close");
+			});
+			
+			//导出按钮点击事件
+			$("#smartart").click(function(){
+				// export to excel导出表格
+			    $('#dg').datagrid('toExcel', 'datagrid.xls');
+			});
+			//打印按钮的点击事件
+			$("#print").click(function(){
+		    	//打印表格
+		    	$('#dg').datagrid('print','DataGrid');	
+			});
+		});
+	</script>
+
+</head>
+<body style="width: 100%; height: 100%;">
+	<!-- 显示数据的表格 -->
+	<table id="dg">
+
+	</table>
+	<!-- 菜单操作工具栏 -->
+	<div id="toolbar">
+		
+		<!-- 修改库存 -->
+		<a class="easyui-linkbutton" iconCls="icon-edit" plain="true"
+			id="update">修改库存</a>
+			<a class="easyui-linkbutton" iconCls="icon-edit" plain="true"
+			id="chuku">领用</a>
+		
+		<!-- 打印 -->
+		<a class="easyui-linkbutton" iconCls="icon-print" plain="true" id="print">打印</a>
+		<!-- 导出Excel -->
+		<a class="easyui-linkbutton" iconCls="icon-large-smartart" plain="true" id="smartart">导出</a>
+		<!-- 条件搜索 -->
+		<form id="searchform" action="#" method="post">
+			<table>
+				<tr>
+					<td>物品编号： <input type="text" name="stockId" />
+					</td>
+					<td>物品名称： <input type="text" name="goodsName" />
+					</td>
+					<td>入库时间： <input type="text" name="stockTime"
+						class="easyui-datebox" />
+					</td>
+					<td><a class="easyui-linkbutton" iconCls="icon-search"
+						plain="false" id="search">搜索库存</a>
+						<a class="easyui-linkbutton" iconCls="icon-reload" plain="true" id="refresh">刷新</a>	
+					</td>
+				</tr>
+			</table>
+		</form>
+	</div>
+
+	<!-- 新增/修改库存对话框 -->
+	<div id="dialog" class="easyui-dialog" title="修改库存"
+		style="width: 400px; height: 300px;"
+		data-options="iconCls:'icon-edit',resizable:false,modal:true"
+		closed="true">
+		<form id="form">
+			<!-- 采用表格布局  -->
+			<table id="mytable">
+
+				<tr>
+					<td class="tdalign">库存编号:</td>
+					<td><input type="text" name="stockId"></td>
+						
+				</tr>
+				<tr>
+					<td class="tdalign">商品名:</td>
+					<td><input type="text" name="goodsName"
+						class="easyui-validatebox"
+						data-options="required:true,missingMessage:'请输入商品名'"></td>
+				</tr>
+				<tr>
+					<td class="tdalign">库存量:</td>
+					<td><input type="text" name="stockNum"
+						class="easyui-numberbox"
+						data-options="required:true,missingMessage:'请输入库存量'"></td>
+				</tr>
+				
+				<tr>
+					<td colspan="2" align="center"><a id="ok"
+						class="easyui-linkbutton" data-options="iconCls:'icon-add'">确定</a>
+						<a id="cancel" class="easyui-linkbutton"
+						data-options="iconCls:'icon-cancel'">取消</a></td>
+				</tr>
+			</table>
+		</form>
+	</div>
+	
+	</div>
+		<div id="dialog1" class="easyui-dialog" title="物料领用"
+		style="width: 400px; height: 300px;"
+		data-options="iconCls:'icon-add',resizable:false,modal:true"
+		closed="true">
+		<form id="form1">
+			<!-- 采用表格布局  -->
+			<table id="mytable1">
+				<tr>
+					<td class="tdalign"></td>
+					<td><input type="hidden" name="ggId"
+						class="easyui-validatebox" data-options="required:false"></td>
+				</tr>
+				<tr>
+					<td class="tdalign">物品名称:</td>
+					<td><input type="text" name="goodsName"
+						class="easyui-validatebox"
+						data-options="required:true,missingMessage:'请输入物品名称'"></td>
+				</tr>
+				<tr>
+					<td class="tdalign">领用数量:</td>
+					<td><input type="text" name="ggNum" class="easyui-numberbox"
+						data-options="required:true,missingMessage:'请输入领用数量'"></td>
+				</tr>
+				<tr>
+					<td class="tdalign">领用人:</td>
+					<td><input type="text" name="ggName"
+						class="easyui-validatebox"
+						data-options="required:true,missingMessage:'请输入领用人'"></td>
+				</tr>
+				<tr>
+					<td class="tdalign">领用时间:</td>
+					<td><input type="text" name="ggTime" class="easyui-datetimebox"
+						data-options="required:true,missingMessage:'请输入领用时间'"></td>
+				</tr>
+				<tr>
+					<td class="tdalign">经办人:</td>
+					<td><select name="ggHandli" class="easyui-combobox" data-options="editable:false,required:true">
+							<option value="">--请选择--</option>
+							<option value="xz-001">俞倩</option>
+							<option value="xz-002">郭梦青</option>
+						</select></td>
+				</tr>
+				<tr>
+					<td colspan="2" align="center"><a id="ok1"
+						class="easyui-linkbutton" data-options="iconCls:'icon-add'">领用</a>
+						<a id="cancel1" class="easyui-linkbutton"
+						data-options="iconCls:'icon-cancel'">取消</a></td>
+				</tr>
+			</table>
+		</form>
+	</div>
+</body>
+</html>

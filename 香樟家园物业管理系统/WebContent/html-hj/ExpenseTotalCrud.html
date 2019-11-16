@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>收入汇总</title>
+	<!-- 导入easyui样式 -->
+	<link rel="stylesheet" type="text/css" href="../easyui/themes/default/easyui.css" />
+	<link rel="stylesheet" type="text/css" href="../easyui/themes/icon.css" /> 
+	<!-- 导入easyui相关的js库文件(函数) -->
+	<script type="text/javascript" src="../easyui/jquery.min.js"></script>
+	<script type="text/javascript" src="../easyui/jquery.easyui.min.js"></script>
+	<script type="text/javascript" src="../easyui/locale/easyui-lang-zh_CN.js"></script>
+	
+	<script type="text/javascript" src="../easyui/datagrid-export.js"></script>
+	<!-- 自定义的样式 -->
+	<style type="text/css">
+		#mytable{
+			width:100px;
+			border-collapse:collapse;
+		}
+		#mytable td{
+			font-size:12px;
+		}
+		.tdalign{
+			text-align: right;
+			width:40%;
+		}
+		#smartart,#print{
+			float:right;
+			margin:0px 5px;
+		}
+	</style>
+	<!-- 脚本代码 -->
+	<script type="text/javascript">
+		$(function(){
+			/* 对表格对象加载datagrid方法 */
+			$("#dg").datagrid({
+				idFiled:'expenseItem',//主键字段
+				toolbar:'#toolbar',//绑定工具栏
+				fit:true,//填充容器
+				url:"../ExpenseServlet?method=findTotal", //数据源路径
+				dataType:"json",
+				nowrap:true,
+				striped: true,//斑马线
+
+				fitColumns:true,//自动填充列
+				rownumbers:true,//增加一个行号列
+				loadMsg:'正在玩命加载，请稍候....',//在页面显示数据之前，显示的文本
+				//冻结列：让某些列永远显示在页面中
+				frozenColumns:[[{
+					'field':'checkbox',//复选框列
+					'checkbox':true
+				}]],
+				//设置datagrid数据表格对象中的数据列
+				columns:[[{
+					field:'expenseItem',
+					title:'项目名称',
+					align:'center',
+					width:'32%'
+				},{
+					field:'expenseMoney',
+					title:'支出金额',
+					align:'center',
+					width:'32%'
+				},{
+					field:'expense_date',
+					title:'日期',
+					align:'center',
+					width:'32%'
+				}]],
+				showFooter:true,
+				//datagrid底部是否显示分页工具栏
+				pagination:true,
+				//底部分页工具栏中，页面记录数列表
+				pageList:[15,30],
+				//分页工具栏显示位置
+				pagePosition:'bottom',
+				//当前页面默认大小(每页显示多少行数据)
+				pageSize:15
+			});
+			//搜索层中的搜索按钮事件
+			$("#search").click(function(){
+				var rows=$("#dg").datagrid("options").pageSize;
+				var page=$("#dg").datagrid("options").pageNumber;
+				$.ajax({
+					type:"post",
+					url:"../ExpenseServlet?method=findTotal&rows="+rows+"&page="+page,
+					async:true,
+					data:$("#searchform").serialize(),//表单数据序列化
+					dataType:"json",
+					success:function(message){
+						$("#dg").datagrid("loadData",message);
+					}
+				});
+			});
+			
+			
+			//刷新按钮
+				$("#refresh").click(function(){
+					//添加成功后，把修改界面数据清空
+					$("#searchform").form("reset");
+					//datagrid数据表格重新加载
+					$("#dg").datagrid("reload");
+				});
+				
+				//导出按钮点击事件
+				$("#smartart").click(function(){
+					// export to excel导出表格
+				    $('#dg').datagrid('toExcel', 'datagrid.xls');
+				});
+				//打印按钮的点击事件
+				$("#print").click(function(){
+			    	//打印表格
+			    	$('#dg').datagrid('print','DataGrid');	
+				});
+		});
+		
+	</script>
+	</head>
+	<body style="width:100%;height:540px">
+		<table id="dg">
+				
+				
+		</table>
+		<!-- 菜单操作工具栏 -->
+		<div id="toolbar">
+			<!-- 打印 -->
+			<a class="easyui-linkbutton" iconCls="icon-print" plain="true" id="print">打印</a>
+			<!-- 导出Excel -->
+			<a class="easyui-linkbutton" iconCls="icon-large-smartart" plain="true" id="smartart">导出</a>
+			<form id="searchform" action="#" method="post">
+				<table>
+					<tr>
+						<td>
+							收入来源：<input type="text" name="expenseItem" />
+						</td>
+						<td>
+							起始时间：<input type="text" class="easyui-datebox" name="datego" />
+						</td>
+						<td>
+							截止时间：<input type="text" class="easyui-datebox" name="datestop" />
+						</td>
+						<td>
+							<select name="month">
+								<option value="">全部</option>
+								<option value="2019-01">一月</option>
+								<option value="2019-02">二月</option>
+								<option value="2019-03">三月</option>
+								<option value="2019-04">四月</option>
+								<option value="2019-05">五月</option>
+								<option value="2019-06">六月</option>
+								<option value="2019-07">七月</option>
+								<option value="2019-08">八月</option>
+								<option value="2019-09">九月</option>
+								<option value="2019-10">十月</option>
+								<option value="2019-11">十一月</option>
+								<option value="2019-12">十二月</option>
+							</select>
+						</td>
+						<td>
+							<a class="easyui-linkbutton" iconCls="icon-search" plain="false" id="search">搜索</a>
+							<a class="easyui-linkbutton" iconCls="icon-reload" plain="false" id="refresh">刷新</a>
+						</td>
+					</tr>
+				</table>
+			</form>
+		</div>
+	</body>
+</html>
